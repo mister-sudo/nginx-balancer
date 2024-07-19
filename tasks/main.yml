@@ -1,0 +1,53 @@
+---
+- block: #=====Block for ubuntu-22=====
+
+    - name: Install dependencies
+      ansible.builtin.apt:
+        name: "{{item}}"
+        state: present
+        update_cache: true
+      loop:
+        - curl
+        - gnupg2
+        - ca-certificates
+        - lsb-release
+        - ubuntu-keyring
+        - apt-transport-https
+        - rsync=3.2.7*
+
+    - name: Add GPG apt key
+      apt_key:
+        url: https://nginx.org/keys/nginx_signing.key
+        keyring: /usr/share/keyrings/nginx-archive-keyring.gpg
+        state: present
+
+    - name: Add apt repository
+      apt_repository:
+        repo: deb [signed-by=/usr/share/keyrings/nginx-archive-keyring.gpg] http://nginx.org/packages/ubuntu jammy nginx
+        state: present
+
+    - name: Install nginx
+      ansible.builtin.apt:
+        name: "{{item}}"
+        state: present
+        update_cache: true
+        force: yes
+      loop:
+        - nginx=1.26.1*
+
+    - name: Start service nginx
+      ansible.builtin.service:
+        name: nginx
+        state: started
+        enabled: yes
+
+    - name: Set up configs"
+      synchronize:
+        src: "{{ configs_path }}"
+        dest: "/etc/nginx/"
+        archive: yes
+        delete: yes
+        recursive: yes
+      notify: Reload nginx service
+
+  when: ansible_distribution_release == 'jammy'
