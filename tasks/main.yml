@@ -35,12 +35,6 @@
       loop:
         - nginx=1.26.1*
 
-    - name: Start service nginx
-      ansible.builtin.service:
-        name: nginx
-        state: started
-        enabled: yes
-
     - name: Set up configs"
       synchronize:
         src: "{{ configs_path }}"
@@ -49,5 +43,11 @@
         delete: yes
         recursive: yes
       notify: Reload nginx service
+
+    - name: Start service nginx
+      ansible.builtin.service:
+        name: nginx
+        state: started
+        enabled: yes
 
   when: ansible_distribution_release == 'jammy'
